@@ -1,0 +1,13 @@
+{
+  "name": "skynet-serial",
+  "version": "0.1.0",
+  "description": "Virtual serial device using Skynet.im",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Luis Montes",
+  "license": "MIT",
+  "dependencies": {
+  }
+}
