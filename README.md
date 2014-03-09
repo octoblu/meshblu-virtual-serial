@@ -13,7 +13,8 @@ Use skynet to message a physical remote serial device:
 var SkynetSerialPort = require('skynet-serial').SerialPort;
 var skynet = require('skynet');
 
-... //setup variables for myId, token, and sendId
+// setup variables for myId, token, sendId
+// the sendId is for the uuid of the physical serial device
 
 var conn = skynet.createConnection({
   uuid: myId,
@@ -39,8 +40,10 @@ Bind a physical serial port to recieve/push data from skynet:
 ```js
 var SerialPort = require('serialport').SerialPort;
 var bindPhysical = require('skynet-serial').bindPhysical;
+var skynet = require('skynet');
 
-... //setup variables for myId, token, and sendId
+// setup variables for myId, token, sendId
+// the sendId should be for the uuid of the SkynetSerialPort app.
 
 var conn = skynet.createConnection({
   uuid: myId,
