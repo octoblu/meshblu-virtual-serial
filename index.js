@@ -13,9 +13,7 @@ function sendLoop(ssp){
     ssp.lastSend = 0;
     var sendMessage = {
       devices: ssp.sendUuid,
-      message: {
-        data: ssp.buffer.toString('base64')
-      }
+      payload: ssp.buffer.toString('base64')
     };
     console.log('sending data', sendMessage);
     ssp.skynet.message(sendMessage);
@@ -36,17 +34,18 @@ function SkynetSerialPort(skynetConnection, sendUuid) {
 
 
   var self = this;
-  this.skynet.on('message', function(toUuid, message){
-    console.log('message from skynet', toUuid, message);
+  this.skynet.on('message', function(message){
+    console.log('message from skynet', message);
     if(typeof message == 'string'){
       try{
         message = JSON.parse(message);
-        if(message.data){
-          self.emit("data", new Buffer(message.data, 'base64'));
-        }
+
       }catch(exp){
         console.log('Not json', message);
       }
+    }
+    if(message.payload){
+      self.emit("data", new Buffer(message.payload, 'base64'));
     }
   });
   sendLoop(this);
@@ -128,9 +127,7 @@ function bindPhysical(serialPort, skynet, sendUuid){
       lastSend = 0;
       var sendMessage = {
         devices: sendUuid,
-        message: {
-          data: buffer.toString('base64')
-        }
+        payload: buffer.toString('base64')
       };
       console.log('sending data', sendMessage);
       skynet.message(sendMessage);
@@ -149,14 +146,14 @@ function bindPhysical(serialPort, skynet, sendUuid){
     }
   });
 
-  skynet.on('message', function(toUuid, message){
-    console.log('message from skynet', toUuid, message);
+  skynet.on('message', function(message){
+    console.log('message from skynet', message);
     if(typeof message == 'string'){
       try{
         message = JSON.parse(message);
-        if(message && message.data){
+        if(message.payload){
           //console.log('writing to serial port', message.message.data);
-          serialPort.write(new Buffer(message.data, 'base64'));
+          serialPort.write(new Buffer(message.payload, 'base64'));
         }
       }catch(exp){
         console.log('error parsing json', exp);
