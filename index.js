@@ -38,7 +38,17 @@ function SkynetSerialPort(skynetConnection, sendUuid) {
     }
 
   });
-  sendLoop(this);
+
+  console.log('sending bind request to', sendUuid);
+  this.skynet.bindSocket({uuid: sendUuid}, function(data){
+    if((data && data.result == 'ok') || (data == 'ok')){
+      console.log('bind successful');
+      sendLoop(self);
+    }else{
+      console.log('error binding', result);
+      throw new Error('failed to bind socket:' + result);
+    }
+  });
 }
 
 util.inherits(SkynetSerialPort, stream.Stream);
