@@ -11,9 +11,9 @@ function sendLoop(ssp){
   ssp.lastSend += delta;
   if(ssp.lastSend > SEND_INTERVAL && ssp.buffer){
     ssp.lastSend = 0;
-    var base64Str = ssp.buffer.toString('base64');
-    console.log('sending data', base64Str);
-    ssp.skynet.send(base64Str);
+    var binaryStr = ssp.buffer.toString('binary');
+    console.log('sending data', binaryStr);
+    ssp.skynet.send(binaryStr);
     ssp.buffer = null;
   }
 
@@ -34,7 +34,7 @@ function SkynetSerialPort(skynetConnection, sendUuid) {
   this.skynet.on('message', function(message){
     console.log('message from skynet', message);
     if(typeof message == 'string'){
-      self.emit("data", new Buffer(message, 'base64'));
+      self.emit("data", new Buffer(message, 'binary'));
     }
 
   });
@@ -115,9 +115,9 @@ function bindPhysical(serialPort, skynet, sendUuid){
     lastSend += delta;
     if(lastSend > SEND_INTERVAL && buffer){
       lastSend = 0;
-      var base64Str = buffer.toString('base64');
-      console.log('sending data', base64Str);
-      skynet.send(base64Str);
+      var binaryStr = buffer.toString('binary');
+      console.log('sending data', binaryStr);
+      skynet.send(binaryStr);
       buffer = null;
     }
 
@@ -145,7 +145,7 @@ function bindPhysical(serialPort, skynet, sendUuid){
     console.log('message from skynet', message);
     if(typeof message == 'string'){
       try{
-        serialPort.write(new Buffer(message, 'base64'));
+        serialPort.write(new Buffer(message, 'binary'));
       }catch(exp){
         console.log('error reading message', exp);
       }
