@@ -1,6 +1,6 @@
 {
   "name": "skynet-serial",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "Virtual serial device using Skynet.im",
   "main": "index.js",
   "repository": "git@github.com:skynetim/serial.git",

@@ -1,10 +1,15 @@
+'use strict';
+
 var util = require('util');
 var stream = require('stream');
 
 var SEND_INTERVAL = 500;
 var CHECK_INTERVAL = 50;
+var BIND_RETRY_INTERVAL = 5000;
+var BIND_TIMEOUT = 5000;
 
 function sendLoop(ssp){
+  ssp.running = true;
 
   var delta = Date.now() - ssp.lastCheck;
   ssp.lastCheck = Date.now();
@@ -22,6 +27,36 @@ function sendLoop(ssp){
   }, CHECK_INTERVAL);
 }
 
+function initiateSocketBind(ssp){
+  console.log('sending bind request to', ssp.sendUuid);
+  var responded = false;
+
+  ssp.skynet.bindSocket({uuid: ssp.sendUuid}, function(data){
+    responded = true;
+    console.log('bind requested', data);
+    if((data && data.result == 'ok') || (data == 'ok')){
+      console.log('bind successful');
+      if(!ssp.running){
+        sendLoop(ssp);
+      }
+    }else{
+      console.log('error binding', data.error);
+      //throw new Error('failed to bind socket:' + data.error);
+      setTimeout(function(){
+        initiateSocketBind(ssp);
+      }, BIND_RETRY_INTERVAL);
+    }
+  });
+
+  setTimeout(function(){
+    if(!responded){
+      console.log('bind timeout, retrying');
+      initiateSocketBind(ssp);
+    }
+  }, BIND_TIMEOUT);
+
+}
+
 function SkynetSerialPort(skynetConnection, sendUuid) {
   this.skynet = skynetConnection;
   this.sendUuid = sendUuid;
@@ -29,9 +64,11 @@ function SkynetSerialPort(skynetConnection, sendUuid) {
   this.lastCheck = 0;
   this.lastSend = 0;
 
-
   var self = this;
-  this.skynet.on('message', function(message){
+
+  initiateSocketBind(self);
+
+  self.skynet.on('message', function(message){
     console.log('message from skynet', message);
     if(typeof message == 'string'){
       self.emit("data", new Buffer(message, 'base64'));
@@ -39,16 +76,12 @@ function SkynetSerialPort(skynetConnection, sendUuid) {
 
   });
 
-  console.log('sending bind request to', sendUuid);
-  this.skynet.bindSocket({uuid: sendUuid}, function(data){
-    if((data && data.result == 'ok') || (data == 'ok')){
-      console.log('bind successful');
-      sendLoop(self);
-    }else{
-      console.log('error binding', result);
-      throw new Error('failed to bind socket:' + result);
-    }
+  self.skynet.on('unboundSocket', function(message){
+    console.log('unbound attempting reconnect', message);
+    initiateSocketBind(self);
+
   });
+
 }
 
 util.inherits(SkynetSerialPort, stream.Stream);
@@ -145,7 +178,6 @@ function bindPhysical(serialPort, skynet, sendUuid){
 
   skynet.on('bindSocket', function(data, fn){
     console.log('bindSocket', data, fn);
-    //could possibly do some checking on data
     if(fn){
       fn('ok');
     }
