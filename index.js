@@ -1,5 +1,8 @@
+'use strict';
+
 var util = require('util');
 var stream = require('stream');
+var _ = require('lodash');
 
 var SEND_INTERVAL = 500;
 var CHECK_INTERVAL = 50;
@@ -9,46 +12,76 @@ function sendLoop(ssp){
   var delta = Date.now() - ssp.lastCheck;
   ssp.lastCheck = Date.now();
   ssp.lastSend += delta;
-  if(ssp.lastSend > SEND_INTERVAL && ssp.buffer){
+  //console.log('checking', ssp.lastSend, ssp.sendInterval, ssp.buffer);
+  if(ssp.lastSend > ssp.sendInterval && ssp.buffer){
     ssp.lastSend = 0;
-    var base64Str = ssp.buffer.toString('base64');
-    console.log('sending data', base64Str);
-    ssp.skynet.send(base64Str);
+    var binaryStr = ssp.buffer.toString('base64');
+    console.log('sending data', binaryStr);
+    var msg = {
+      devices: ssp.sendUuid,
+      payload: binaryStr
+    };
+    if(ssp.subdevice){
+      msg.subdevice = ssp.subdevice;
+    }
+    ssp.skynet.directText(msg);
     ssp.buffer = null;
   }
 
   setTimeout(function(){
     sendLoop(ssp);
-  }, CHECK_INTERVAL);
+  }, ssp.checkInterval);
 }
 
-function SkynetSerialPort(skynetConnection, sendUuid) {
+function SkynetSerialPort(skynetConnection, options) {
+  if(typeof options === 'string'){
+    this.sendUuid = [options];
+    this.checkInterval = CHECK_INTERVAL;
+    this.sendInterval = SEND_INTERVAL;
+  }else if (typeof options === 'object'){
+    this.sendUuid = options.sendUuid;
+    if(typeof this.sendUuid === 'string'){
+      this.sendUuid = [this.sendUuid];
+    }
+    this.subdevice = options.subdevice;
+    this.checkInterval = options.checkInterval || CHECK_INTERVAL;
+    this.sendInterval = options.sendInterval || SEND_INTERVAL;
+  }
   this.skynet = skynetConnection;
-  this.sendUuid = sendUuid;
   this.buffer = null;
   this.lastCheck = 0;
   this.lastSend = 0;
 
 
   var self = this;
-  this.skynet.on('message', function(message){
+  self.skynet.on('textBroadcast', function(message){
     console.log('message from skynet', message);
-    if(typeof message == 'string'){
-      self.emit("data", new Buffer(message, 'base64'));
+
+    if(typeof message === 'string'){
+      self.emit('data', new Buffer(message, 'base64'));
+    }
+    else if(typeof message === 'object' && _.contains(self.sendUuid, message.fromUuid) && typeof message.payload === 'string'){
+      self.emit('data', new Buffer(message.payload, 'base64'));
+    }
+    else{
+      console.log('invalid text broadcast', message);
     }
 
   });
 
-  console.log('sending bind request to', sendUuid);
-  this.skynet.bindSocket({uuid: sendUuid}, function(data){
-    if((data && data.result == 'ok') || (data == 'ok')){
-      console.log('bind successful');
-      sendLoop(self);
-    }else{
-      console.log('error binding', result);
-      throw new Error('failed to bind socket:' + result);
-    }
+  self.sendUuid.forEach(function(uuid){
+    self.skynet.subscribeText(uuid, function(result){
+      console.log('subcribe', uuid, result);
+    });
   });
+
+  //TODO - MAJOR: kick off soon as subscribtions are done.
+  setTimeout(function(){
+    sendLoop(self);
+  }, 1000);
+
+
+
 }
 
 util.inherits(SkynetSerialPort, stream.Stream);
@@ -114,10 +147,21 @@ SkynetSerialPort.prototype.drain = function (callback) {
 };
 
 
-function bindPhysical(serialPort, skynet, sendUuid){
+function bindPhysical(serialPort, skynet){
   var lastCheck = Date.now();
   var lastSend = 0;
   var buffer;
+
+  function serialWrite(data){
+    try{
+      if(typeof data === 'string'){
+        data = new Buffer(data, 'base64');
+      }
+      serialPort.write(data);
+    }catch(exp){
+      console.log('error reading message', exp);
+    }
+  }
 
   function send(){
     var delta = Date.now() - lastCheck;
@@ -125,9 +169,9 @@ function bindPhysical(serialPort, skynet, sendUuid){
     lastSend += delta;
     if(lastSend > SEND_INTERVAL && buffer){
       lastSend = 0;
-      var base64Str = buffer.toString('base64');
-      console.log('sending data', base64Str);
-      skynet.send(base64Str);
+      var binaryStr = buffer.toString('base64');
+      console.log('sending data', binaryStr);
+      skynet.textBroadcast(binaryStr);
       buffer = null;
     }
 
@@ -135,7 +179,6 @@ function bindPhysical(serialPort, skynet, sendUuid){
   }
 
   serialPort.on('data', function(data){
-    //console.log('serialport data received', data);
     if(buffer){
       buffer = Buffer.concat([buffer, data]);
     }else{
@@ -143,23 +186,12 @@ function bindPhysical(serialPort, skynet, sendUuid){
     }
   });
 
-  skynet.on('bindSocket', function(data, fn){
-    console.log('bindSocket', data, fn);
-    //could possibly do some checking on data
-    if(fn){
-      fn('ok');
-    }
-  });
-
-  skynet.on('message', function(message){
+  skynet.on('textBroadcast', function(message){
     console.log('message from skynet', message);
-    if(typeof message == 'string'){
-      try{
-        serialPort.write(new Buffer(message, 'base64'));
-      }catch(exp){
-        console.log('error reading message', exp);
-      }
-
+    if(typeof message === 'string'){
+      serialWrite(message);
+    }else if (typeof message === 'object'){
+      serialWrite(message.payload);
     }
 
   });
