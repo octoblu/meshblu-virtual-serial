@@ -7,7 +7,9 @@ var _ = require('lodash');
 var SEND_INTERVAL = 500;
 var CHECK_INTERVAL = 50;
 
+
 function sendLoop(ssp){
+  ssp.running = true;
 
   var delta = Date.now() - ssp.lastCheck;
   ssp.lastCheck = Date.now();
@@ -47,14 +49,15 @@ function SkynetSerialPort(skynetConnection, options) {
     this.checkInterval = options.checkInterval || CHECK_INTERVAL;
     this.sendInterval = options.sendInterval || SEND_INTERVAL;
   }
+
   this.skynet = skynetConnection;
   this.buffer = null;
   this.lastCheck = 0;
   this.lastSend = 0;
 
-
   var self = this;
   self.skynet.on('textBroadcast', function(message){
+
     console.log('message from skynet', message);
 
     if(typeof message === 'string'){
@@ -79,8 +82,6 @@ function SkynetSerialPort(skynetConnection, options) {
   setTimeout(function(){
     sendLoop(self);
   }, 1000);
-
-
 
 }
 
