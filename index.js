@@ -18,11 +18,11 @@ function sendLoop(ssp){
   if(ssp.lastSend > ssp.sendInterval && ssp.buffer){
     ssp.lastSend = 0;
     var binaryStr = ssp.buffer.toString('base64');
-    console.log('sending data', binaryStr);
     var msg = {
       devices: ssp.sendUuid,
       payload: binaryStr
     };
+    console.log('sending data', msg);
     if(ssp.subdevice){
       msg.subdevice = ssp.subdevice;
     }
@@ -48,6 +48,10 @@ function SkynetSerialPort(skynetConnection, options) {
     this.subdevice = options.subdevice;
     this.checkInterval = options.checkInterval || CHECK_INTERVAL;
     this.sendInterval = options.sendInterval || SEND_INTERVAL;
+  }else if(Array.isArray(options)){
+    this.sendUuid = options;
+    this.checkInterval = CHECK_INTERVAL;
+    this.sendInterval = SEND_INTERVAL;
   }
 
   this.skynet = skynetConnection;
@@ -56,7 +60,8 @@ function SkynetSerialPort(skynetConnection, options) {
   this.lastSend = 0;
 
   var self = this;
-  self.skynet.on('textBroadcast', function(message){
+  //console.log('conn', skynetConnection);
+  skynetConnection.on('tb', function(message){
 
     console.log('message from skynet', message);
 
@@ -187,7 +192,7 @@ function bindPhysical(serialPort, skynet){
     }
   });
 
-  skynet.on('textBroadcast', function(message){
+  skynet.on('tb', function(message){
     console.log('message from skynet', message);
     if(typeof message === 'string'){
       serialWrite(message);
