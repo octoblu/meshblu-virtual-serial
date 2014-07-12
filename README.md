@@ -22,8 +22,8 @@ var conn = skynet.createConnection({
 });
 
 conn.on('ready', function(data){
-  serialPort = new SkynetSerialPort(conn, sendId);
-  board = new firmata.Board(serialPort, function (err, ok) {
+  var serialPort = new SkynetSerialPort(conn, sendId);
+  var board = new firmata.Board(serialPort, function (err, ok) {
     if (err){ throw err; }
     //light up a pin
     board.digitalWrite(13, 1);
@@ -51,11 +51,11 @@ var conn = skynet.createConnection({
 });
 
 conn.on('ready', function(data){
-  serialPort = new SerialPort('/dev/tty.usbmodem1411',{
+  var serialPort = new SerialPort('/dev/tty.usbmodem1411',{
       baudrate: 57600,
       buffersize: 1
   });
-  bindPhysical(serialPort, conn, sendId);
+  bindPhysical(serialPort, conn);
 });
 
 ```

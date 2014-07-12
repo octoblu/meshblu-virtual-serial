@@ -1,0 +1,16 @@
+{
+  "name": "skynetSerialExample",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "firmata": "git://github.com/monteslu/firmata",
+    "skynet-mqtt": "*",
+    "skynet-serial": "*"
+  }
+}
