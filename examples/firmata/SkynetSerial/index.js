@@ -1,5 +1,5 @@
 var SkynetSerialPort = require('skynet-serial').SerialPort;
-var skynet = require('skynet');
+var skynet = require('skynet-mqtt');
 var firmata = require('firmata');
 
 // You mus set up variables for myId and token
