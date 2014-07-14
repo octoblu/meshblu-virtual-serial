@@ -21,7 +21,8 @@ var conn = skynet.createConnection({
 
 conn.on('ready', function(data){
   var serialPort = new SkynetSerialPort(conn, sendId);
-  board = new firmata.Board(serialPort, {samplingInterval:60000}, function (err, ok) {
+  var options = {skipHandshake:true};
+  board = new firmata.Board(serialPort, options, function (err, ok) {
     if (err){ throw err; }
 
     togglePin();

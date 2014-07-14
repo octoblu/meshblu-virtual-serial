@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "firmata": "git://github.com/monteslu/firmata",
+    "firmata": "git://github.com/monteslu/firmata#nohandshake",
     "skynet-mqtt": "*",
     "skynet-serial": "*"
   }
