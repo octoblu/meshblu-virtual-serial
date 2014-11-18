@@ -19,14 +19,18 @@ function sendLoop(ssp){
     ssp.lastSend = 0;
     var binaryStr = ssp.buffer.toString('base64');
     var msg = {
-      devices: ssp.sendUuid,
       payload: binaryStr
     };
-    console.log('sending data', msg);
     if(ssp.subdevice){
       msg.subdevice = ssp.subdevice;
     }
-    ssp.skynet.directText(msg);
+    if(ssp.sendUuid){
+      msg.devices = ssp.sendUuid;
+      ssp.skynet.directText(msg);
+      console.log('sent data', msg);
+    }else{
+      ssp.textBroadcast(binaryStr);
+    }
     ssp.buffer = null;
   }
 
@@ -42,7 +46,7 @@ function SkynetSerialPort(skynetConnection, options) {
     this.sendInterval = SEND_INTERVAL;
   }else if (typeof options === 'object'){
     this.sendUuid = options.sendUuid;
-    if(typeof this.sendUuid === 'string'){
+    if(this.sendUuid && typeof this.sendUuid === 'string'){
       this.sendUuid = [this.sendUuid];
     }
     this.subdevice = options.subdevice;
@@ -77,11 +81,14 @@ function SkynetSerialPort(skynetConnection, options) {
 
   });
 
-  self.sendUuid.forEach(function(uuid){
-    self.skynet.subscribeText(uuid, function(result){
-      console.log('subcribe', uuid, result);
+  if(this.sendUuid){
+    self.sendUuid.forEach(function(uuid){
+      self.skynet.subscribeText(uuid, function(result){
+        console.log('subcribe', uuid, result);
+      });
     });
-  });
+  }
+
 
   //TODO - MAJOR: kick off soon as subscribtions are done.
   setTimeout(function(){
@@ -106,7 +113,7 @@ SkynetSerialPort.prototype.open = function (callback) {
 SkynetSerialPort.prototype.write = function (data, callback) {
 
   var self = this;
-  if (!this.skynet || !this.sendUuid) {
+  if (!this.skynet) {
     var err = new Error("SkynetSerialport not open.");
     if (callback) {
       callback(err);
