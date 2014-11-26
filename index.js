@@ -29,7 +29,7 @@ function sendLoop(ssp){
       ssp.skynet.directText(msg);
       console.log('sent data', msg);
     }else{
-      ssp.textBroadcast(binaryStr);
+      ssp.skynet.textBroadcast(binaryStr);
     }
     ssp.buffer = null;
   }
