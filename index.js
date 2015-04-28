@@ -67,16 +67,19 @@ function SkynetSerialPort(skynetConnection, options) {
   //console.log('conn', skynetConnection);
   skynetConnection.on('tb', function(message){
 
-    console.log('message from skynet', message);
+   //console.log('--message from skynet--', typeof(message.payload));
+
+   
 
     if(typeof message === 'string'){
       self.emit('data', new Buffer(message, 'base64'));
     }
-    else if(typeof message === 'object' && _.contains(self.sendUuid, message.fromUuid) && typeof message.payload === 'string'){
+    else if(typeof message === 'object' /* && _.contains(self.sendUuid, message.fromUuid) */ && typeof message.payload === 'string'){
       self.emit('data', new Buffer(message.payload, 'base64'));
+     
     }
     else{
-      console.log('invalid text broadcast', message);
+      console.log('--invalid text broadcast', message);
     }
 
   });
