@@ -3,6 +3,9 @@ skynet-serial
 
 Virtual serial port running on top of skynet.im
 
+#Use with Remote-IO!
+
+https://github.com/monteslu/remote-io
 
 
 # SkynetSerialPort
