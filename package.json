@@ -5,9 +5,12 @@
   "main": "index.js",
   "repository": "git@github.com:skynetim/serial.git",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo 0"
   },
-  "author": "Luis Montes",
+  "contributors": [
+    "Octoblu Inc",
+    "Luis Montes"
+  ],
   "license": "MIT",
   "dependencies": {
     "lodash": "^2.4.1"

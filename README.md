@@ -1,5 +1,5 @@
-skynet-serial
-=============
+meshblu-virtual-serial
+======================
 
 Virtual serial port running on top of skynet.im
 

@@ -1,0 +1,22 @@
+sudo: false
+language: node_js
+cache:
+  bundler: true
+  directories:
+    - node_modules
+notifications:
+  flowdock: e7454f5285e7b9ab67009802d5560490
+node_js:
+- '0.10'
+deploy:
+  provider: npm
+  skip_cleanup: true
+  clean_up: false
+  email: serveradmin@octoblu.com
+  api_key:
+    secure: "ehSp+pV97qJYFuw48HIv9+hb3F1iSNT1Ylm5XRUspydit4xat2pbgJWm1i3Z3LnXTeYHRQlyFRZMN2VUCR0J8H0IRZM41hsE4RVz5hiw90DHfG0lfT8ifZoJW9PifQ1a1NeLVgeb4Byt4FbUIEpEDzWIX9tjQB7iIOix7KBZwAA="
+  on:
+    tags: true
+    all_branches: true
+after_script:
+  - cat coverage/lcov.info | codeclimate
