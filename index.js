@@ -65,18 +65,15 @@ function SkynetSerialPort(skynetConnection, options) {
 
   var self = this;
   //console.log('conn', skynetConnection);
-  skynetConnection.on('tb', function(message){
+  skynetConnection.on('message', function(message){
 
    //console.log('--message from skynet--', typeof(message.payload));
-
-   
 
     if(typeof message === 'string'){
       self.emit('data', new Buffer(message, 'base64'));
     }
     else if(typeof message === 'object' /* && _.contains(self.sendUuid, message.fromUuid) */ && typeof message.payload === 'string'){
       self.emit('data', new Buffer(message.payload, 'base64'));
-     
     }
     else{
       console.log('--invalid text broadcast', message);
@@ -86,7 +83,7 @@ function SkynetSerialPort(skynetConnection, options) {
 
   if(this.sendUuid){
     self.sendUuid.forEach(function(uuid){
-      self.skynet.subscribeText(uuid, function(result){
+      self.skynet.subscribe(uuid, function(result){
         console.log('subcribe', uuid, result);
       });
     });
@@ -202,7 +199,7 @@ function bindPhysical(serialPort, skynet){
     }
   });
 
-  skynet.on('tb', function(message){
+  skynet.on('message', function(message){
     console.log('message from skynet', message);
     if(typeof message === 'string'){
       serialWrite(message);
