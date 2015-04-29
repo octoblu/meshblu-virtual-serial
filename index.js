@@ -2,7 +2,6 @@
 
 var util = require('util');
 var stream = require('stream');
-var _ = require('lodash');
 
 var SEND_INTERVAL = 500;
 var CHECK_INTERVAL = 50;
@@ -10,27 +9,16 @@ var CHECK_INTERVAL = 50;
 
 function sendLoop(ssp){
   ssp.running = true;
+  var destinationUuid = ssp.sendUuid || '*';
 
   var delta = Date.now() - ssp.lastCheck;
   ssp.lastCheck = Date.now();
   ssp.lastSend += delta;
-  //console.log('checking', ssp.lastSend, ssp.sendInterval, ssp.buffer);
   if(ssp.lastSend > ssp.sendInterval && ssp.buffer){
     ssp.lastSend = 0;
     var binaryStr = ssp.buffer.toString('base64');
-    var msg = {
-      payload: binaryStr
-    };
-    if(ssp.subdevice){
-      msg.subdevice = ssp.subdevice;
-    }
-    if(ssp.sendUuid){
-      msg.devices = ssp.sendUuid;
-      ssp.skynet.directText(msg);
-      console.log('sent data', msg);
-    }else{
-      ssp.skynet.textBroadcast(binaryStr);
-    }
+
+    ssp.skynet.message(destinationUuid, binaryStr);
     ssp.buffer = null;
   }
 
@@ -40,22 +28,21 @@ function sendLoop(ssp){
 }
 
 function SkynetSerialPort(skynetConnection, options) {
+  this.checkInterval = CHECK_INTERVAL;
+  this.sendInterval = SEND_INTERVAL;
+
   if(typeof options === 'string'){
     this.sendUuid = [options];
-    this.checkInterval = CHECK_INTERVAL;
-    this.sendInterval = SEND_INTERVAL;
+  }else if(Array.isArray(options)){
+    this.sendUuid = options;
   }else if (typeof options === 'object'){
     this.sendUuid = options.sendUuid;
     if(this.sendUuid && typeof this.sendUuid === 'string'){
       this.sendUuid = [this.sendUuid];
     }
     this.subdevice = options.subdevice;
-    this.checkInterval = options.checkInterval || CHECK_INTERVAL;
-    this.sendInterval = options.sendInterval || SEND_INTERVAL;
-  }else if(Array.isArray(options)){
-    this.sendUuid = options;
-    this.checkInterval = CHECK_INTERVAL;
-    this.sendInterval = SEND_INTERVAL;
+    this.checkInterval = options.checkInterval || this.checkInterval;
+    this.sendInterval = options.sendInterval || this.sendInterval;
   }
 
   this.skynet = skynetConnection;
@@ -64,28 +51,22 @@ function SkynetSerialPort(skynetConnection, options) {
   this.lastSend = 0;
 
   var self = this;
-  //console.log('conn', skynetConnection);
   skynetConnection.on('message', function(message){
-
-   //console.log('--message from skynet--', typeof(message.payload));
-
     if(typeof message === 'string'){
       self.emit('data', new Buffer(message, 'base64'));
     }
-    else if(typeof message === 'object' /* && _.contains(self.sendUuid, message.fromUuid) */ && typeof message.payload === 'string'){
+    else if(typeof message === 'object' && typeof message.payload === 'string'){
       self.emit('data', new Buffer(message.payload, 'base64'));
     }
     else{
-      console.log('--invalid text broadcast', message);
+      console.error('invalid text broadcast', message);
     }
 
   });
 
   if(this.sendUuid){
     self.sendUuid.forEach(function(uuid){
-      self.skynet.subscribe(uuid, function(result){
-        console.log('subcribe', uuid, result);
-      });
+      self.skynet.subscribe(uuid);
     });
   }
 
@@ -105,13 +86,9 @@ SkynetSerialPort.prototype.open = function (callback) {
   if (callback) {
     callback();
   }
-
 };
 
-
-
 SkynetSerialPort.prototype.write = function (data, callback) {
-
   var self = this;
   if (!this.skynet) {
     var err = new Error("SkynetSerialport not open.");
@@ -132,33 +109,27 @@ SkynetSerialPort.prototype.write = function (data, callback) {
   }else{
     this.buffer = data;
   }
-
-  console.log('adding data to buffer:', data);
 };
 
 
 
 SkynetSerialPort.prototype.close = function (callback) {
-  console.log('closing');
   if(callback){
     callback();
   }
 };
 
 SkynetSerialPort.prototype.flush = function (callback) {
-  console.log('flush');
   if(callback){
     callback();
   }
 };
 
 SkynetSerialPort.prototype.drain = function (callback) {
-  console.log('drain');
   if(callback){
     callback();
   }
 };
-
 
 function bindPhysical(serialPort, skynet){
   var lastCheck = Date.now();
@@ -172,7 +143,7 @@ function bindPhysical(serialPort, skynet){
       }
       serialPort.write(data);
     }catch(exp){
-      console.log('error reading message', exp);
+      console.error('error reading message', exp);
     }
   }
 
@@ -183,8 +154,7 @@ function bindPhysical(serialPort, skynet){
     if(lastSend > SEND_INTERVAL && buffer){
       lastSend = 0;
       var binaryStr = buffer.toString('base64');
-      console.log('sending data', binaryStr);
-      skynet.textBroadcast(binaryStr);
+      skynet.message('*', binaryStr);
       buffer = null;
     }
 
@@ -200,7 +170,6 @@ function bindPhysical(serialPort, skynet){
   });
 
   skynet.on('message', function(message){
-    console.log('message from skynet', message);
     if(typeof message === 'string'){
       serialWrite(message);
     }else if (typeof message === 'object'){
