@@ -2,6 +2,7 @@
 
 var util = require('util');
 var stream = require('stream');
+var debug = require('debug')('meshblu-virtual-serial');
 
 var SEND_INTERVAL = 500;
 var CHECK_INTERVAL = 50;
@@ -18,6 +19,7 @@ function sendLoop(ssp){
     ssp.lastSend = 0;
     var binaryStr = ssp.buffer.toString('base64');
 
+    debug('meshblu out', destinationUuid, binaryStr);
     ssp.skynet.message(destinationUuid, binaryStr);
     ssp.buffer = null;
   }
@@ -52,6 +54,7 @@ function SkynetSerialPort(skynetConnection, options) {
 
   var self = this;
   skynetConnection.on('message', function(message){
+    debug('meshblu in', message);
     if(typeof message === 'string'){
       self.emit('data', new Buffer(message, 'base64'));
     }

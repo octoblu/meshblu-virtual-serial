@@ -12,5 +12,7 @@
     "Luis Montes"
   ],
   "license": "MIT",
-  "dependencies": {}
+  "dependencies": {
+    "debug": "^2.1.3"
+  }
 }
