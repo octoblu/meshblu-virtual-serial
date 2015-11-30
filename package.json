@@ -1,9 +1,9 @@
 {
   "name": "meshblu-virtual-serial",
-  "version": "1.1.0",
-  "description": "Virtual serial device using Skynet.im",
+  "version": "1.2.0",
+  "description": "Virtual serial device using meshblu (formerly skynet)",
   "main": "index.js",
-  "repository": "git@github.com:skynetim/serial.git",
+  "repository": "git@github.com:octoblu/meshblu-virtual-serial.git",
   "scripts": {
     "test": "echo 0"
   },

@@ -1,15 +1,15 @@
 var SerialPort = require('serialport').SerialPort;
-var bindPhysical = require('skynet-serial').bindPhysical;
-var skynet = require('skynet-mqtt');
+var bindPhysical = require('../../../').bindPhysical;
+var meshblu = require('meshblu');
 
 // You mus set up variables for myId and token
-// You can create a skynet device with this curl command:
-// curl -X POST -d "type=fakeFirmware&payloadOnly=true&name=myDevice" http://skynet.im/devices
+// You can create a meshblu device with this curl command:
+// curl -X POST -H "Content-Type: application/json" -d '{"type":"thing","name":"myDevice","receiveWhitelist":["*"],"sendWhitelist":["*"]}' http://meshblu.octoblu.com/devices
 
-var myId = 'REPLACE THIS WITH A UUID !!!';
-var token = 'REPLACE THIS WITH A TOKEN!!!!';
+var myId = process.env.UUID || 'REPLACE THIS WITH A UUID !!!';
+var token = process.env.TOKEN || 'REPLACE THIS WITH A TOKEN!!!!';
 
-var conn = skynet.createConnection({
+var conn = meshblu.createConnection({
   uuid: myId,
   token: token
 });
@@ -19,6 +19,7 @@ var conn = skynet.createConnection({
 var portName = '/dev/tty.usbmodem1411';
 
 conn.on('ready', function(data){
+  console.log('meshblu connection ready, connecting to serial port');
   var serialPort = new SerialPort(portName,{
       baudrate: 57600,
       buffersize: 1

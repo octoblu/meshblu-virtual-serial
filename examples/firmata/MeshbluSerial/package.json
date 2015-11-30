@@ -1,5 +1,5 @@
 {
-  "name": "skynetSerialExample",
+  "name": "meshbluSerialExample",
   "version": "0.0.0",
   "description": "",
   "main": "index.js",
@@ -9,8 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "firmata": "git://github.com/monteslu/firmata#nohandshake",
-    "skynet-mqtt": "*",
-    "skynet-serial": "*"
+    "firmata": "^0.8.0",
+    "meshblu": "^1.31.0"
   }
 }
