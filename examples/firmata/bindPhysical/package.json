@@ -9,8 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "serialport": "^1.4.2",
-    "skynet-mqtt": "*",
-    "skynet-serial": "*"
+    "meshblu": "^1.31.0",
+    "serialport": "^2.0.5"
   }
 }

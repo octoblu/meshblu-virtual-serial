@@ -29,7 +29,7 @@ function sendLoop(ssp){
   }, ssp.checkInterval);
 }
 
-function SkynetSerialPort(skynetConnection, options) {
+function MeshbluSerialPort(skynetConnection, options) {
   this.checkInterval = CHECK_INTERVAL;
   this.sendInterval = SEND_INTERVAL;
 
@@ -69,7 +69,10 @@ function SkynetSerialPort(skynetConnection, options) {
 
   if(this.sendUuid){
     self.sendUuid.forEach(function(uuid){
-      self.skynet.subscribe(uuid);
+      debug('subscribing to', uuid);
+      self.skynet.subscribe({uuid: uuid, types: ['broadcast']}, function(ok){
+        debug('subscribed to', uuid, ok);
+      });
     });
   }
 
@@ -81,20 +84,20 @@ function SkynetSerialPort(skynetConnection, options) {
 
 }
 
-util.inherits(SkynetSerialPort, stream.Stream);
+util.inherits(MeshbluSerialPort, stream.Stream);
 
 
-SkynetSerialPort.prototype.open = function (callback) {
+MeshbluSerialPort.prototype.open = function (callback) {
   this.emit('open');
   if (callback) {
     callback();
   }
 };
 
-SkynetSerialPort.prototype.write = function (data, callback) {
+MeshbluSerialPort.prototype.write = function (data, callback) {
   var self = this;
   if (!this.skynet) {
-    var err = new Error("SkynetSerialport not open.");
+    var err = new Error("MeshbluSerialPort not open.");
     if (callback) {
       callback(err);
     } else {
@@ -116,19 +119,19 @@ SkynetSerialPort.prototype.write = function (data, callback) {
 
 
 
-SkynetSerialPort.prototype.close = function (callback) {
+MeshbluSerialPort.prototype.close = function (callback) {
   if(callback){
     callback();
   }
 };
 
-SkynetSerialPort.prototype.flush = function (callback) {
+MeshbluSerialPort.prototype.flush = function (callback) {
   if(callback){
     callback();
   }
 };
 
-SkynetSerialPort.prototype.drain = function (callback) {
+MeshbluSerialPort.prototype.drain = function (callback) {
   if(callback){
     callback();
   }
@@ -157,6 +160,7 @@ function bindPhysical(serialPort, skynet){
     if(lastSend > SEND_INTERVAL && buffer){
       lastSend = 0;
       var binaryStr = buffer.toString('base64');
+      debug('meshblu out', buffer, binaryStr);
       skynet.message('*', binaryStr);
       buffer = null;
     }
@@ -165,6 +169,7 @@ function bindPhysical(serialPort, skynet){
   }
 
   serialPort.on('data', function(data){
+    debug('serialport data', data);
     if(buffer){
       buffer = Buffer.concat([buffer, data]);
     }else{
@@ -173,6 +178,7 @@ function bindPhysical(serialPort, skynet){
   });
 
   skynet.on('message', function(message){
+    debug('on skynet message', message, typeof message);
     if(typeof message === 'string'){
       serialWrite(message);
     }else if (typeof message === 'object'){
@@ -187,6 +193,6 @@ function bindPhysical(serialPort, skynet){
 
 
 module.exports = {
-  SerialPort: SkynetSerialPort,
+  SerialPort: MeshbluSerialPort,
   bindPhysical: bindPhysical
 };
