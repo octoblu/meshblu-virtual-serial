@@ -1,31 +1,31 @@
 meshblu-virtual-serial
 ======================
 
-Virtual serial port running on top of skynet.im
+Virtual serial port running on top of meshblu (formerly skynet.im)
 
 #Use with Remote-IO!
 
 https://github.com/monteslu/remote-io
 
 
-# SkynetSerialPort
+# MeshbluSerialPort
 
 Use skynet to message a physical remote serial device:
 
 ```js
-var SkynetSerialPort = require('skynet-serial').SerialPort;
-var skynet = require('skynet');
+var MeshbluSerialPort = require('skynet-serial').SerialPort;
+var meshblu = require('meshblu');
 
 // setup variables for myId, token, sendId
 // the sendId is for the uuid of the physical serial device
 
-var conn = skynet.createConnection({
+var conn = meshblu.createConnection({
   uuid: myId,
   token: token
 });
 
 conn.on('ready', function(data){
-  var serialPort = new SkynetSerialPort(conn, sendId);
+  var serialPort = new MeshbluSerialPort(conn, sendId);
   var board = new firmata.Board(serialPort, function (err, ok) {
     if (err){ throw err; }
     //light up a pin
@@ -43,12 +43,12 @@ Bind a physical serial port to recieve/push data from skynet:
 ```js
 var SerialPort = require('serialport').SerialPort;
 var bindPhysical = require('skynet-serial').bindPhysical;
-var skynet = require('skynet');
+var meshblu = require('meshblu');
 
 // setup variables for myId, token, sendId
-// the sendId should be for the uuid of the SkynetSerialPort app.
+// the sendId should be for the uuid of the MeshbluSerialPort app.
 
-var conn = skynet.createConnection({
+var conn = meshblu.createConnection({
   uuid: myId,
   token: token
 });
